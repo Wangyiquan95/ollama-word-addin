@@ -1,0 +1,29 @@
+{
+  "name": "ollama-word-addin",
+  "version": "1.0.0",
+  "description": "AI-powered Word add-in using Ollama models",
+  "main": "taskpane.html",
+  "scripts": {
+    "start": "npx http-server -p 3000 -c-1",
+    "dev": "npx http-server -p 3000 -c-1 --cors",
+    "build": "echo 'No build step required for this add-in'",
+    "validate": "npx office-addin-manifest validate manifest.xml"
+  },
+  "keywords": [
+    "office-add-in",
+    "word",
+    "ollama",
+    "ai",
+    "writing-assistant"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "office-addin-manifest": "^1.12.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/ollama-word-addin.git"
+  }
+}

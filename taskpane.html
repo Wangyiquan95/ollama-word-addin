@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ollama for Word</title>
+    
+    <!-- Office.js -->
+    <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="taskpane.css">
+</head>
+
+<body>
+    <div class="ms-welcome">
+        <header class="ms-welcome__header ms-bgColor-neutralLighter ms-fontColor-neutralPrimary">
+            <img width="90" height="90" src="assets/logo-filled.png" alt="Ollama" title="Ollama" />
+            <h1 class="ms-fontSize-su ms-fontWeight-light ms-fontColor-neutralPrimary">Ollama for Word</h1>
+        </header>
+        
+        <main class="ms-welcome__main">
+            <!-- Connection Status -->
+            <div class="connection-status" id="connectionStatus">
+                <span class="status-indicator" id="statusIndicator"></span>
+                <span id="statusText">Connecting to Ollama...</span>
+            </div>
+            
+            <!-- Model Selection -->
+            <div class="model-section">
+                <label for="modelSelect" class="ms-fontWeight-semibold">Select Model:</label>
+                <div class="model-selector-row">
+                    <select id="modelSelect" class="model-select">
+                        <option value="">Loading models...</option>
+                    </select>
+                    <button id="refreshModels" class="refresh-btn">↻</button>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <h3 class="ms-fontWeight-semibold">Quick Actions</h3>
+                <div class="action-buttons">
+                    <button id="improveBtn" class="action-btn ms-Button ms-Button--primary">
+                        <span class="ms-Button-label">Improve Text</span>
+                    </button>
+                    <button id="summarizeBtn" class="action-btn ms-Button ms-Button--primary">
+                        <span class="ms-Button-label">Summarize</span>
+                    </button>
+                    <button id="grammarBtn" class="action-btn ms-Button ms-Button--primary">
+                        <span class="ms-Button-label">Fix Grammar</span>
+                    </button>
+                    <button id="translateBtn" class="action-btn ms-Button ms-Button--primary">
+                        <span class="ms-Button-label">Translate</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Custom Prompt -->
+            <div class="custom-prompt-section">
+                <h3 class="ms-fontWeight-semibold">Custom Prompt</h3>
+                <textarea id="customPrompt" class="custom-prompt" placeholder="Enter your custom prompt here..."></textarea>
+                <div class="prompt-options">
+                    <label>
+                        <input type="checkbox" id="useSelection"> Use selected text as context
+                        <span id="wordCount" class="word-count" style="display: none;"></span>
+                    </label>
+                    <label>
+                        <input type="checkbox" id="replaceText"> Replace selected text with response
+                    </label>
+                </div>
+                <button id="executePrompt" class="ms-Button ms-Button--primary">
+                    <span class="ms-Button-label">Execute Prompt</span>
+                </button>
+            </div>
+            
+            <!-- Response Area -->
+            <div class="response-section">
+                <div class="response-header">
+                    <h3 class="ms-fontWeight-semibold">Response</h3>
+                    <div id="generationProgress" class="generation-progress" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill"></div>
+                        </div>
+                        <span class="progress-text">Generating...</span>
+                    </div>
+                </div>
+                <div id="responseArea" class="response-area">
+                    <p class="placeholder-text">AI responses will appear here...</p>
+                </div>
+                <div class="response-actions">
+                    <button id="insertBtn" class="ms-Button ms-Button--primary" disabled>
+                        <span class="ms-Button-label">Insert into Document</span>
+                    </button>
+                    <button id="copyBtn" class="ms-Button" disabled>
+                        <span class="ms-Button-label">Copy</span>
+                    </button>
+                    <button id="clearBtn" class="ms-Button ms-Button--secondary" disabled>
+                        <span class="ms-Button-label">Clear</span>
+                    </button>
+                    <button id="stopGeneration" class="ms-Button ms-Button--danger" style="display: none;">
+                        <span class="ms-Button-label">Stop</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Settings -->
+            <div class="settings-section">
+                <details>
+                    <summary class="ms-fontWeight-semibold">Settings</summary>
+                    <div class="settings-content">
+                        <div class="setting-item">
+                            <label for="ollamaUrl">Ollama Server URL:</label>
+                            <input type="text" id="ollamaUrl" value="http://localhost:11434" class="setting-input">
+                        </div>
+                        <div class="setting-item">
+                            <label for="temperature">Temperature:</label>
+                            <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7" class="setting-range">
+                            <span id="temperatureValue">0.7</span>
+                        </div>
+                        <div class="setting-item">
+                            <label for="maxTokens">Max Tokens:</label>
+                            <input type="number" id="maxTokens" value="2048" min="1" max="8192" class="setting-input">
+                        </div>
+                        <div class="setting-item">
+                            <label for="topP">Top P:</label>
+                            <input type="range" id="topP" min="0" max="1" step="0.05" value="0.9" class="setting-range">
+                            <span id="topPValue">0.9</span>
+                        </div>
+                        <div class="setting-item">
+                            <label for="topK">Top K:</label>
+                            <input type="number" id="topK" value="40" min="1" max="100" class="setting-input">
+                        </div>
+                        <div class="setting-item">
+                            <label for="repeatPenalty">Repeat Penalty:</label>
+                            <input type="range" id="repeatPenalty" min="0.5" max="2" step="0.05" value="1.1" class="setting-range">
+                            <span id="repeatPenaltyValue">1.1</span>
+                        </div>
+                        <div class="setting-item">
+                            <label for="systemPrompt">System Prompt:</label>
+                            <textarea id="systemPrompt" class="setting-textarea" placeholder="You are a helpful assistant..."></textarea>
+                        </div>
+                        <div class="setting-item">
+                            <label for="defaultModel">Default Model:</label>
+                            <select id="defaultModel" class="setting-input">
+                                <option value="">No default (manual selection)</option>
+                            </select>
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </main>
+        
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p>Processing...</p>
+        </div>
+    </div>
+    
+    <script src="taskpane.js"></script>
+</body>
+</html>
