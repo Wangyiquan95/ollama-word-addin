@@ -29,6 +29,8 @@ An AI-powered Microsoft Word add-in that integrates with Ollama to provide writi
 1. **Clone or download** this repository
 2. **Install dependencies**:
    ```bash
+   # download Node.js at https://nodejs.org/en/download/
+   # now you can use npm to install addin
    npm install
    ```
 
@@ -43,6 +45,8 @@ An AI-powered Microsoft Word add-in that integrates with Ollama to provide writi
    - Go to **Insert** > **Add-ins** > **Upload My Add-in**
    - Select the `manifest.xml` file
    - The add-in will appear in the Home ribbon
+  
+   - if **Upload My Add-in** is not available: copy the `manifest.xml` file to `~/Library/Containers/com.microsoft.Word/Data/Documents/wef/` # for Mac user:
 
 ## Usage
 
