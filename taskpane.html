@@ -27,16 +27,7 @@
                 <span id="statusText">Connecting to Ollama...</span>
             </div>
             
-            <!-- Model Selection -->
-            <div class="model-section">
-                <label for="modelSelect" class="ms-fontWeight-semibold">Select Model:</label>
-                <div class="model-selector-row">
-                    <select id="modelSelect" class="model-select">
-                        <option value="">Loading models...</option>
-                    </select>
-                    <button id="refreshModels" class="refresh-btn">↻</button>
-                </div>
-            </div>
+
             
             <!-- Quick Actions -->
             <div class="quick-actions">
@@ -63,12 +54,16 @@
                 <textarea id="customPrompt" class="custom-prompt" placeholder="Enter your custom prompt here..."></textarea>
                 <div class="prompt-options">
                     <label>
-                        <input type="checkbox" id="useSelection"> Use selected text as context
+                        <input type="checkbox" id="useSelection" checked> Use selected text as context
                         <span id="wordCount" class="word-count" style="display: none;"></span>
                     </label>
                     <label>
                         <input type="checkbox" id="replaceText"> Replace selected text with response
                     </label>
+                    <label>
+                        <input type="checkbox" id="enablePmidSearch" checked> Enable PMID Search
+                    </label>
+                    <p class="setting-description">Automatically fetch PubMed article details when PMIDs are detected in selected text</p>
                 </div>
                 <button id="executePrompt" class="ms-Button ms-Button--primary">
                     <span class="ms-Button-label">Execute Prompt</span>
@@ -142,9 +137,32 @@
                             <textarea id="systemPrompt" class="setting-textarea" placeholder="You are a helpful assistant..."></textarea>
                         </div>
                         <div class="setting-item">
-                            <label for="defaultModel">Default Model:</label>
-                            <select id="defaultModel" class="setting-input">
-                                <option value="">No default (manual selection)</option>
+                            <label for="defaultModel">Model Selection:</label>
+                            <div class="model-selector-row">
+                                <select id="defaultModel" class="setting-input">
+                                    <option value="">No default (manual selection)</option>
+                                </select>
+                                <button id="refreshModels" class="refresh-btn">↻</button>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <label for="targetLanguage">Translation Language:</label>
+                            <select id="targetLanguage" class="setting-input">
+                                <option value="Spanish">Spanish</option>
+                                <option value="French">French</option>
+                                <option value="German">German</option>
+                                <option value="Italian">Italian</option>
+                                <option value="Portuguese">Portuguese</option>
+                                <option value="Chinese">Chinese</option>
+                                <option value="Japanese">Japanese</option>
+                                <option value="Korean">Korean</option>
+                                <option value="Russian">Russian</option>
+                                <option value="Arabic">Arabic</option>
+                                <option value="Dutch">Dutch</option>
+                                <option value="Swedish">Swedish</option>
+                                <option value="Norwegian">Norwegian</option>
+                                <option value="Danish">Danish</option>
+                                <option value="Finnish">Finnish</option>
                             </select>
                         </div>
                     </div>

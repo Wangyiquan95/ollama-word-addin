@@ -2,35 +2,54 @@
 
 An AI-powered Microsoft Word add-in that integrates with Ollama to provide writing assistance directly within Word documents.
 
-## Features
+## ✨ Features
 
-- **Quick Actions**: Improve text, summarize, fix grammar, and translate
-- **Custom Prompts**: Execute custom AI prompts with selected text
-- **Model Selection**: Choose from available Ollama models with default model setting
-- **Real-time Generation**: Stream responses as they're generated with progress indicator
-- **Smart Text Integration**: Use selected text as context with real-time word count
-- **Advanced Settings**: Fine-tune model parameters (temperature, top-p, top-k, repeat penalty)
+### 🚀 **Quick Actions**
+- **Improve Text**: Enhance clarity and writing quality
+- **Summarize**: Create concise summaries of selected text
+- **Fix Grammar**: Correct grammar, spelling, and punctuation errors
+- **Translate**: Translate text to 15+ languages (Spanish, French, German, Italian, Portuguese, Chinese, Japanese, Korean, Russian, Arabic, Dutch, Swedish, Norwegian, Danish, Finnish)
+
+### 🧠 **Smart AI Integration**
+- **Model Pre-loading**: Automatically initializes your preferred model on startup for faster responses
+- **Smart Default Model**: Intelligently selects the best available model (prioritizes gpt-oss:latest, llama2:latest, etc.)
+- **Real-time Streaming**: Watch AI responses generate word-by-word with progress indicators
+- **PMID Search**: Automatically detects PMIDs in selected text and fetches PubMed article details as context
+
+### 📝 **Custom Prompts**
+- **Flexible Prompting**: Execute any custom AI prompt with selected text
+- **Context Integration**: Use selected text as context with real-time word count
+- **PMID Enhancement**: Automatically fetch and include PubMed article abstracts when PMIDs are detected
+- **Response Management**: Insert, copy, or clear AI responses
+
+### ⚙️ **Advanced Configuration**
+- **Model Parameters**: Fine-tune temperature, top-p, top-k, repeat penalty, and max tokens
 - **System Prompts**: Customize AI behavior with system-level instructions
-- **Document Integration**: Insert AI responses directly into Word documents
-- **Modern UI**: Clean, compact design optimized for task pane usage
-- **Real-time Status**: Connection status indicator for Ollama server
+- **Translation Settings**: Set your preferred translation language
+- **Persistent Settings**: All preferences saved between sessions
 
-## Prerequisites
+### 🎨 **Modern Interface**
+- **Clean Design**: Optimized for Word task pane with minimal scrolling
+- **Real-time Status**: Connection status indicator for Ollama server
+- **Smart UI**: Buttons enable/disable based on context and response availability
+- **Responsive Layout**: Adapts to different task pane sizes
+
+## 🛠️ Prerequisites
 
 1. **Ollama**: Install and run Ollama on your machine
    - Download from [https://ollama.ai](https://ollama.ai)
-   - Pull at least one model (e.g., `ollama pull llama2`)
+   - Pull at least one model (e.g., `ollama pull gpt-oss` or `ollama pull llama2`)
    - Ensure Ollama is running on `http://localhost:11434`
 
 2. **Microsoft Word**: Word 2016 or later (Windows/Mac) or Word Online
 
-## Installation
+## 📦 Installation
 
 1. **Clone or download** this repository
 2. **Install dependencies**:
    ```bash
-   # download Node.js at https://nodejs.org/en/download/
-   # now you can use npm to install addin
+   # Download Node.js at https://nodejs.org/en/download/
+   # Now you can use npm to install the add-in
    npm install
    ```
 
@@ -45,31 +64,34 @@ An AI-powered Microsoft Word add-in that integrates with Ollama to provide writi
    - Go to **Insert** > **Add-ins** > **Upload My Add-in**
    - Select the `manifest.xml` file
    - The add-in will appear in the Home ribbon
-  
-   - if **Upload My Add-in** is not available: copy the `manifest.xml` file to `~/Library/Containers/com.microsoft.Word/Data/Documents/wef/` # for Mac user:
+   
+   **For Mac users**: If "Upload My Add-in" is not available, copy the `manifest.xml` file to:
+   `~/Library/Containers/com.microsoft.Word/Data/Documents/wef/`
 
-## Usage
+## 🎯 Usage
 
+### Quick Start
 1. **Open the add-in** by clicking the "Show Ollama" button in the Home ribbon
-2. **Check connection** - the status indicator should show "Connected to Ollama"
-3. **Select a model** from the dropdown (models are loaded automatically)
-4. **Use Quick Actions**:
-   - Select text and click "Improve Text", "Summarize", "Fix Grammar", or "Translate"
-5. **Custom Prompts**:
-   - Enter a custom prompt in the text area
-   - Optionally check "Use selected text as context" (shows real-time word count)
-   - Click "Execute Prompt"
-6. **Real-time Generation**: Watch responses stream in as they're generated
-7. **Response Management**:
-   - **Insert into Document**: Add AI responses to your Word document
-   - **Copy**: Copy responses to clipboard
-   - **Clear**: Remove response output to start fresh
-8. **Stop Generation**: Cancel ongoing AI generation at any time
+2. **Check connection** - the status indicator should show "Connected to Ollama (model ready)"
+3. **Select text** in your Word document
+4. **Use Quick Actions**: Click "Improve Text", "Summarize", "Fix Grammar", or "Translate"
+5. **Watch responses** stream in real-time as they're generated
 
-## Configuration
+### Custom Prompts
+1. **Enter a custom prompt** in the text area
+2. **Enable "Use selected text as context"** (default: enabled)
+3. **Enable "PMID Search"** to automatically fetch PubMed articles when PMIDs are detected
+4. **Click "Execute Prompt"** to run your custom prompt
 
-### Ollama Server Settings
-- **URL**: Default is `http://localhost:11434`
+### Advanced Features
+- **PMID Integration**: When you select text containing PMIDs (like "PMID:12345678"), the add-in automatically fetches the article's title, authors, journal, and abstract to provide rich context
+- **Model Pre-loading**: The add-in automatically initializes your preferred model on startup for faster first responses
+- **Smart Defaults**: Automatically selects the best available model and sets it as default
+
+## ⚙️ Configuration
+
+### Model Settings
+- **URL**: Ollama server URL (default: `http://localhost:11434`)
 - **Temperature**: Controls randomness (0.0 to 1.0)
 - **Max Tokens**: Maximum response length
 - **Top P**: Nucleus sampling parameter (0.0 to 1.0)
@@ -78,16 +100,15 @@ An AI-powered Microsoft Word add-in that integrates with Ollama to provide writi
 - **System Prompt**: Custom instructions for AI behavior
 - **Default Model**: Set preferred model for automatic selection
 
-### Supported Actions
-- **Improve Text**: Enhances clarity and writing quality
-- **Summarize**: Creates concise summaries
-- **Fix Grammar**: Corrects grammar and spelling
-- **Translate**: Translates to specified languages
-- **Custom Prompts**: Execute any custom AI prompt with context
-- **Real-time Streaming**: Watch AI responses generate live
-- **Smart Context**: Use selected text with automatic word counting
+### Translation Settings
+- **Translation Language**: Choose from 15+ languages for the Translate button
+- **Persistent Selection**: Your language choice is remembered between sessions
 
-## Development
+### PMID Search Settings
+- **Enable PMID Search**: Automatically fetch PubMed article details when PMIDs are detected
+- **Smart Context**: Includes article title, authors, journal, publication date, DOI, and abstract
+
+## 🏗️ Development
 
 ### File Structure
 ```
@@ -104,65 +125,70 @@ ollama-word-addin/
 
 ### Key Components
 - **OllamaAPI Class**: Handles communication with Ollama server including streaming
+- **PubMedAPI Class**: Fetches article details from PubMed for PMID integration
 - **Word Integration**: Uses Office.js for document manipulation and text insertion
 - **Real-time UI**: Progress indicators, streaming responses, and live updates
 - **Smart Context**: Automatic text selection monitoring and word counting
-- **Advanced Settings**: Comprehensive model parameter control and persistence
-- **Modern UI**: Responsive design with glass morphism and smooth animations
+- **Settings Management**: Comprehensive parameter control and persistence
 
-## New Features & Improvements
+### Available Scripts
+- `npm start`: Start development server (port 3000)
+- `npm run dev`: Start with CORS headers enabled
+- `npm run validate`: Validate the add-in manifest
 
-### 🚀 **Real-time Generation**
-- **Streaming Responses**: Watch AI responses generate word-by-word in real-time
-- **Progress Indicators**: Visual feedback during generation with animated progress bars
-- **Stop Generation**: Cancel ongoing AI generation at any time
-- **Auto-scrolling**: Response area automatically scrolls during streaming
-
-### 🎯 **Smart Text Integration**
-- **Real-time Word Count**: See word count update automatically as you change text selection
-- **Context Awareness**: Use selected text as context for AI prompts
-- **Selection Monitoring**: Automatic detection of text selection changes
-- **Smart Insertion**: Insert responses at cursor position or document end
-
-### ⚙️ **Advanced Model Control**
-- **Fine-tuned Parameters**: Control temperature, top-p, top-k, and repeat penalty
-- **System Prompts**: Customize AI behavior with system-level instructions
-- **Default Model**: Set preferred model for automatic selection on startup
-- **Parameter Persistence**: All settings saved between sessions
-
-### 🎨 **Modern User Interface**
-- **Compact Design**: Optimized for Word task pane with minimal scrolling
-- **Glass Morphism**: Modern visual effects with backdrop blur and transparency
-- **Responsive Layout**: Adapts to different task pane sizes
-- **Smooth Animations**: Hover effects and transitions for better user experience
-
-### 📝 **Response Management**
-- **Clear Button**: Remove response output to start fresh
-- **Smart Button States**: Buttons enable/disable based on response availability
-- **Multiple Insert Options**: Insert at cursor or document end
-- **Copy to Clipboard**: Easy copying of AI responses
-
-## Troubleshooting
+## 🔧 Troubleshooting
 
 ### Connection Issues
 - Ensure Ollama is running: `ollama serve`
 - Check if models are available: `ollama list`
 - Verify server URL in settings
+- Check console for connection status messages
+
+### Model Loading Issues
+- The add-in automatically initializes models on startup
+- Check console for initialization messages
+- Large models may take longer to initialize (up to 15 seconds)
 
 ### Add-in Not Loading
 - Check that the development server is running on port 3000
 - Ensure manifest.xml is valid
 - Try refreshing Word or reloading the add-in
+- For Mac: Ensure manifest.xml is in the correct directory
 
 ### CORS Issues
 - Use `npm run dev` which includes CORS headers
 - Ensure Ollama allows cross-origin requests
 
-## License
+### PMID Search Issues
+- Check internet connection for PubMed API access
+- Verify PMID format (8-digit numbers, optionally prefixed with "PMID:")
+- Check console for PubMed API error messages
+
+## 🎨 Design Philosophy
+
+### 🎯 **User-Centric Design**
+- **Minimal Scrolling**: Most content fits in standard task pane height
+- **Smart Defaults**: Sensible defaults that work for most users
+- **Progressive Disclosure**: Settings hidden by default, expandable when needed
+- **Task-focused Layout**: Essential features always visible
+
+### 🔄 **Performance Optimized**
+- **Model Pre-loading**: Faster first responses through automatic initialization
+- **Smart Caching**: PubMed results cached for 24 hours
+- **Real-time Feedback**: Immediate response to user actions
+- **Efficient UI**: Minimal resource usage
+
+### 🛡️ **Robust & Reliable**
+- **Error Handling**: Clear messages and graceful fallbacks
+- **Persistent Settings**: User preferences remembered between sessions
+- **Connection Monitoring**: Real-time status indicators
+- **Graceful Degradation**: Works even when some features fail
+
+## 📄 License
 
 MIT License - see LICENSE file for details
 
-## Contributing
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
@@ -170,23 +196,18 @@ MIT License - see LICENSE file for details
 4. Test thoroughly
 5. Submit a pull request
 
-## Design Philosophy
-
-### 🎯 **Compact & Efficient**
-- **Minimal Scrolling**: Most content fits in standard task pane height
-- **Smart Spacing**: Optimized margins and padding for space efficiency
-- **Progressive Disclosure**: Settings hidden by default, expandable when needed
-- **Task-focused Layout**: Essential features always visible, advanced features accessible
-
-### 🔄 **User Experience**
-- **Real-time Feedback**: Immediate response to user actions
-- **Contextual Help**: Word counts and status indicators provide guidance
-- **Persistent Settings**: User preferences remembered between sessions
-- **Error Handling**: Clear messages and graceful fallbacks
-
-## Support
+## 📞 Support
 
 For issues and questions:
-1. Check the troubleshooting section
-2. Review Ollama documentation
+1. Check the troubleshooting section above
+2. Review Ollama documentation at [https://ollama.ai](https://ollama.ai)
 3. Open an issue on GitHub
+
+## 🆕 Recent Updates
+
+- **PMID Search Integration**: Automatically fetch PubMed article details for enhanced context
+- **Model Pre-loading**: Faster startup with automatic model initialization
+- **Smart Default Model Selection**: Intelligently chooses the best available model
+- **Translation Language Settings**: Persistent language selection in settings
+- **Improved UI Organization**: Clean separation between Quick Actions and Settings
+- **Enhanced Error Handling**: Better feedback and graceful fallbacks

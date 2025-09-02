@@ -27,6 +27,14 @@ Office.onReady((info) => {
         // Selection change listener for word count
         document.getElementById("useSelection").onchange = () => updateWordCount();
         
+        // PMID search event listener
+        const pmidSearchElement = document.getElementById("enablePmidSearch");
+        if (pmidSearchElement) {
+            pmidSearchElement.onchange = (e) => {
+                pmidSearchEnabled = e.target.checked;
+            };
+        }
+        
         // Set up real-time selection monitoring
         setupSelectionMonitoring();
         
@@ -39,6 +47,7 @@ Office.onReady((info) => {
 let currentResponse = '';
 let isGenerating = false;
 let abortController = null;
+let pmidSearchEnabled = true;
 let ollamaSettings = {
     url: 'http://localhost:11434',
     temperature: 0.7,
@@ -59,6 +68,9 @@ async function initializeAddin() {
     
     // Load available models
     await loadModels();
+    
+    // Initialize Ollama with test message to pre-load model
+    await initializeOllamaModel();
 }
 
 // Ollama API Functions
@@ -178,6 +190,230 @@ class OllamaAPI {
     }
 }
 
+// Initialize Ollama model with test message to pre-load it
+async function initializeOllamaModel() {
+    const defaultModelSelect = document.getElementById('defaultModel');
+    const selectedModel = defaultModelSelect.value;
+    
+    if (!selectedModel) {
+        console.log('No model selected for initialization');
+        return;
+    }
+    
+    try {
+        console.log(`🚀 Initializing Ollama model: ${selectedModel} (this will make future requests faster)`);
+        
+        const ollama = new OllamaAPI(ollamaSettings.url);
+        
+        // Send a simple test message to pre-load the model
+        const testPrompt = "Hello! Please respond with just 'Ready' to confirm the model is loaded.";
+        
+        // Use a shorter timeout for initialization
+        const initController = new AbortController();
+        const timeoutId = setTimeout(() => initController.abort(), 15000); // 15 second timeout for larger models
+        
+        const response = await ollama.generateResponse(selectedModel, testPrompt, {
+            temperature: 0.1, // Low temperature for consistent response
+            maxTokens: 10,    // Very short response
+            topP: 0.9,
+            topK: 40,
+            repeatPenalty: 1.1,
+            systemPrompt: 'Respond with only the word "Ready".'
+        });
+        
+        clearTimeout(timeoutId);
+        
+        console.log(`✅ Model ${selectedModel} initialized successfully! Response: "${response.trim()}"`);
+        
+        // Update status to show model is ready
+        const statusText = document.getElementById('statusText');
+        if (statusText && statusText.textContent.includes('Connected to Ollama')) {
+            statusText.textContent = `Connected to Ollama (${selectedModel} ready)`;
+        }
+        
+        return true; // Success
+        
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            console.warn(`⏰ Model ${selectedModel} initialization timed out (model may still work, just slower on first use)`);
+        } else {
+            console.warn(`❌ Failed to initialize model ${selectedModel}:`, error.message);
+        }
+        // Don't show error to user as this is a background initialization
+        // The model will still work, just might take longer on first use
+        return false; // Failed
+    }
+}
+
+// PMID Search and PubMed API Functions
+class PubMedAPI {
+    constructor() {
+        this.baseUrl = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
+        this.cache = new Map();
+        this.maxCacheSize = 100;
+    }
+
+    // Extract PMIDs from text using regex
+    extractPMIDs(text) {
+        if (!text) return [];
+        
+        // PMID pattern: 8 digits, optionally preceded by "PMID:", "pmid:", or "PMID"
+        const pmidPattern = /(?:PMID:?\s*)?(\d{8})/gi;
+        const matches = text.match(pmidPattern);
+        
+        if (!matches) return [];
+        
+        // Extract just the numbers and remove duplicates
+        const pmids = matches.map(match => {
+            const numberMatch = match.match(/\d{8}/);
+            return numberMatch ? numberMatch[0] : null;
+        }).filter(pmid => pmid !== null);
+        
+        return [...new Set(pmids)]; // Remove duplicates
+    }
+
+    // Fetch article details from PubMed
+    async fetchArticleDetails(pmid) {
+        // Check cache first
+        if (this.cache.has(pmid)) {
+            const cached = this.cache.get(pmid);
+            if (Date.now() - cached.timestamp < 86400000) { // 24 hours
+                return cached.data;
+            }
+        }
+
+        try {
+            console.log(`🔍 Fetching PubMed details for PMID: ${pmid}`);
+            
+            // First, get the article summary
+            const summaryUrl = `${this.baseUrl}/esummary.fcgi?db=pubmed&id=${pmid}&retmode=json`;
+            const summaryResponse = await fetch(summaryUrl);
+            
+            if (!summaryResponse.ok) {
+                throw new Error(`HTTP error! status: ${summaryResponse.status}`);
+            }
+            
+            const summaryData = await summaryResponse.json();
+            const result = summaryData.result[pmid];
+            
+            if (!result || result.error) {
+                console.warn(`No data found for PMID: ${pmid}`);
+                return null;
+            }
+
+            // Extract relevant information
+            const articleInfo = {
+                pmid: pmid,
+                title: result.title || 'No title available',
+                authors: result.authors ? result.authors.map(a => a.name).join(', ') : 'No authors listed',
+                journal: result.source || 'No journal listed',
+                pubDate: result.pubdate || 'No date available',
+                abstract: result.abstract || 'No abstract available',
+                doi: result.elocationid || 'No DOI available'
+            };
+
+            // Cache the result
+            this.cache.set(pmid, {
+                data: articleInfo,
+                timestamp: Date.now()
+            });
+
+            // Limit cache size
+            if (this.cache.size > this.maxCacheSize) {
+                const firstKey = this.cache.keys().next().value;
+                this.cache.delete(firstKey);
+            }
+
+            console.log(`✅ Successfully fetched details for PMID: ${pmid}`);
+            return articleInfo;
+
+        } catch (error) {
+            console.error(`Failed to fetch details for PMID ${pmid}:`, error);
+            return null;
+        }
+    }
+
+    // Fetch multiple articles and format as context
+    async fetchMultipleArticles(pmids) {
+        if (!pmids || pmids.length === 0) return '';
+
+        console.log(`📚 Fetching details for ${pmids.length} PMIDs: ${pmids.join(', ')}`);
+        
+        const articles = [];
+        for (const pmid of pmids) {
+            const article = await this.fetchArticleDetails(pmid);
+            if (article) {
+                articles.push(article);
+            }
+        }
+
+        if (articles.length === 0) {
+            console.log('No articles found for the provided PMIDs');
+            return '';
+        }
+
+        // Format articles as context
+        let context = '\n\n--- PubMed Articles Context ---\n';
+        articles.forEach((article, index) => {
+            context += `\n[Article ${index + 1} - PMID: ${article.pmid}]\n`;
+            context += `Title: ${article.title}\n`;
+            context += `Authors: ${article.authors}\n`;
+            context += `Journal: ${article.journal}\n`;
+            context += `Publication Date: ${article.pubDate}\n`;
+            context += `DOI: ${article.doi}\n`;
+            context += `Abstract: ${article.abstract}\n`;
+            context += '---\n';
+        });
+
+        console.log(`✅ Formatted context for ${articles.length} articles`);
+        return context;
+    }
+}
+
+// Global PubMed API instance
+const pubmedAPI = new PubMedAPI();
+
+// Select the best default model based on available models
+function selectBestDefaultModel(models) {
+    // Priority order for model selection (best to worst for general use)
+    const preferredModels = [
+        'gpt-oss:latest',          // Preferred general purpose model
+        'llama2:latest',           // Good general purpose model
+        'qwen3-coder:latest',      // Good for coding tasks
+        'qwen3:30b',              // Good general purpose
+        'gemma3:27b-it-qat',      // Good instruction following
+    ];
+    
+    // First, try to find a preferred model
+    for (const preferred of preferredModels) {
+        const found = models.find(m => m.name === preferred);
+        if (found) {
+            console.log(`Found preferred model: ${preferred}`);
+            return preferred;
+        }
+    }
+    
+    // If no preferred model found, look for models with good characteristics
+    const goodModels = models.filter(m => {
+        const name = m.name.toLowerCase();
+        return (
+            name.includes('llama') || 
+            name.includes('gpt') || 
+            name.includes('qwen') ||
+            name.includes('gemma')
+        );
+    });
+    
+    if (goodModels.length > 0) {
+        console.log(`Using good general purpose model: ${goodModels[0].name}`);
+        return goodModels[0].name;
+    }
+    
+    // Fallback to first model
+    console.log(`Using first available model: ${models[0].name}`);
+    return models[0].name;
+}
+
 // Connection and model management
 async function checkOllamaConnection() {
     const statusIndicator = document.getElementById('statusIndicator');
@@ -201,31 +437,22 @@ async function checkOllamaConnection() {
 }
 
 async function loadModels() {
-    const modelSelect = document.getElementById('modelSelect');
     const defaultModelSelect = document.getElementById('defaultModel');
     
-    modelSelect.innerHTML = '<option value="">Loading models...</option>';
+    defaultModelSelect.innerHTML = '<option value="">Loading models...</option>';
     
     const ollama = new OllamaAPI(ollamaSettings.url);
     const models = await ollama.getModels();
-    
-    modelSelect.innerHTML = '';
     
     // Update default model dropdown
     defaultModelSelect.innerHTML = '<option value="">No default (manual selection)</option>';
     
     if (models.length === 0) {
-        modelSelect.innerHTML = '<option value="">No models available</option>';
+        defaultModelSelect.innerHTML = '<option value="">No models available</option>';
         return;
     }
     
     models.forEach(model => {
-        // Main model selector
-        const option = document.createElement('option');
-        option.value = model.name;
-        option.textContent = model.name;
-        modelSelect.appendChild(option);
-        
         // Default model selector
         const defaultOption = document.createElement('option');
         defaultOption.value = model.name;
@@ -236,12 +463,25 @@ async function loadModels() {
     // Apply default model selection if set
     const defaultModel = localStorage.getItem('ollama_default_model');
     if (defaultModel && models.some(m => m.name === defaultModel)) {
-        modelSelect.value = defaultModel;
         defaultModelSelect.value = defaultModel;
+        console.log(`Using saved default model: ${defaultModel}`);
     } else if (models.length > 0) {
-        // Select the first model if no default is set
-        modelSelect.value = models[0].name;
+        // Select the best default model if no default is set
+        const bestModel = selectBestDefaultModel(models);
+        console.log(`No default model set, using recommended model: ${bestModel}`);
+        
+        // Auto-set the best model as default for faster future startups
+        localStorage.setItem('ollama_default_model', bestModel);
+        defaultModelSelect.value = bestModel;
+        console.log(`Auto-set ${bestModel} as default model for faster startup`);
     }
+    
+    // Add event listener for model selection changes to initialize new models
+    defaultModelSelect.addEventListener('change', async () => {
+        if (defaultModelSelect.value) {
+            await initializeOllamaModel();
+        }
+    });
 }
 
 // Word document interaction functions
@@ -332,8 +572,17 @@ async function translateText() {
         return;
     }
     
-    const targetLanguage = prompt('Enter target language (e.g., Spanish, French, German):');
-    if (!targetLanguage) return;
+    const targetLanguageElement = document.getElementById('targetLanguage');
+    if (!targetLanguageElement) {
+        showError('Translation language setting not found.');
+        return;
+    }
+    
+    const targetLanguage = targetLanguageElement.value;
+    if (!targetLanguage) {
+        showError('Please select a target language.');
+        return;
+    }
     
     const translationPrompt = `Please translate the following text to ${targetLanguage}:\n\n${selectedText}`;
     await processPrompt(translationPrompt);
@@ -348,11 +597,35 @@ async function executeCustomPrompt() {
     
     const useSelection = document.getElementById('useSelection').checked;
     let finalPrompt = customPrompt;
+    let selectedText = '';
     
     if (useSelection) {
-        const selectedText = await getSelectedText();
+        selectedText = await getSelectedText();
         if (selectedText.trim()) {
             finalPrompt += `\n\nText to work with:\n${selectedText}`;
+            
+            // Check for PMIDs if PMID search is enabled
+            if (pmidSearchEnabled) {
+                const pmids = pubmedAPI.extractPMIDs(selectedText);
+                if (pmids.length > 0) {
+                    console.log(`🔍 Found ${pmids.length} PMIDs in selected text: ${pmids.join(', ')}`);
+                    
+                    // Show loading message for PMID search
+                    const responseArea = document.getElementById('responseArea');
+                    responseArea.innerHTML = '<p class="placeholder-text">🔍 Fetching PubMed articles...</p>';
+                    
+                    try {
+                        const pmidContext = await pubmedAPI.fetchMultipleArticles(pmids);
+                        if (pmidContext) {
+                            finalPrompt += pmidContext;
+                            console.log('✅ Added PubMed context to prompt');
+                        }
+                    } catch (error) {
+                        console.warn('Failed to fetch PMID context:', error);
+                        // Continue without PMID context
+                    }
+                }
+            }
         }
     }
     
@@ -362,11 +635,11 @@ async function executeCustomPrompt() {
 
 // Core processing function
 async function processPrompt(prompt, replaceSelection = false) {
-    const modelSelect = document.getElementById('modelSelect');
-    const selectedModel = modelSelect.value;
+    const defaultModelSelect = document.getElementById('defaultModel');
+    const selectedModel = defaultModelSelect.value;
     
     if (!selectedModel) {
-        showError('Please select a model first.');
+        showError('Please select a model first in Settings.');
         return;
     }
     
@@ -571,6 +844,8 @@ function loadSettings() {
     const savedRepeatPenalty = localStorage.getItem('ollama_repeat_penalty');
     const savedSystemPrompt = localStorage.getItem('ollama_system_prompt');
     const savedDefaultModel = localStorage.getItem('ollama_default_model');
+    const savedPmidSearch = localStorage.getItem('ollama_pmid_search');
+    const savedTargetLanguage = localStorage.getItem('ollama_target_language');
     
     if (savedUrl) {
         ollamaSettings.url = savedUrl;
@@ -614,6 +889,21 @@ function loadSettings() {
         document.getElementById('defaultModel').value = savedDefaultModel;
     }
     
+    if (savedPmidSearch !== null) {
+        pmidSearchEnabled = savedPmidSearch === 'true';
+        const pmidSearchElement = document.getElementById('enablePmidSearch');
+        if (pmidSearchElement) {
+            pmidSearchElement.checked = pmidSearchEnabled;
+        }
+    }
+    
+    if (savedTargetLanguage) {
+        const targetLanguageElement = document.getElementById('targetLanguage');
+        if (targetLanguageElement) {
+            targetLanguageElement.value = savedTargetLanguage;
+        }
+    }
+    
     // Add event listeners for settings changes
     document.getElementById('ollamaUrl').addEventListener('change', (e) => {
         ollamaSettings.url = e.target.value;
@@ -654,9 +944,20 @@ function loadSettings() {
     
     document.getElementById('defaultModel').addEventListener('change', (e) => {
         localStorage.setItem('ollama_default_model', e.target.value);
-        // Update main model selector if a default is chosen
-        if (e.target.value) {
-            document.getElementById('modelSelect').value = e.target.value;
-        }
     });
+    
+    const pmidSearchElement = document.getElementById('enablePmidSearch');
+    if (pmidSearchElement) {
+        pmidSearchElement.addEventListener('change', (e) => {
+            pmidSearchEnabled = e.target.checked;
+            localStorage.setItem('ollama_pmid_search', e.target.checked);
+        });
+    }
+    
+    const targetLanguageElement = document.getElementById('targetLanguage');
+    if (targetLanguageElement) {
+        targetLanguageElement.addEventListener('change', (e) => {
+            localStorage.setItem('ollama_target_language', e.target.value);
+        });
+    }
 }
