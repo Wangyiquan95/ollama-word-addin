@@ -12,7 +12,7 @@ An AI-powered Microsoft Word add-in that integrates with Ollama to provide writi
 
 ### 🧠 **Smart AI Integration**
 - **Model Pre-loading**: Automatically initializes your preferred model on startup for faster responses
-- **Smart Default Model**: Intelligently selects the best available model (prioritizes gpt-oss:latest, llama2:latest, etc.)
+- **Default Model**: Intelligently selects the best available model (prioritizes gpt-oss:latest.)
 - **Real-time Streaming**: Watch AI responses generate word-by-word with progress indicators
 - **PMID Search**: Automatically detects PMIDs in selected text and fetches PubMed article details as context
 
@@ -65,8 +65,10 @@ An AI-powered Microsoft Word add-in that integrates with Ollama to provide writi
    - Select the `manifest.xml` file
    - The add-in will appear in the Home ribbon
    
-   **For Mac users**: If "Upload My Add-in" is not available, copy the `manifest.xml` file to:
-   `~/Library/Containers/com.microsoft.Word/Data/Documents/wef/`
+   **Manual Installation (if "Upload My Add-in" is not available):**
+   - **Windows**: Copy `manifest.xml` to: `%LOCALAPPDATA%\Microsoft\Office\16.0\Wef\`
+   - **Windows Alternative**: Try: `%APPDATA%\Microsoft\Office\16.0\Wef\`
+   - **Mac**: Copy `manifest.xml` to: `~/Library/Containers/com.microsoft.Word/Data/Documents/wef/`
 
 ## 🎯 Usage
 
